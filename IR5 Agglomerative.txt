@@ -1,0 +1,37 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
+import scipy.cluster.hierarchy as shc
+
+# --- 1. Load & Pre-process Data ---
+# Load the dataset
+X = pd.read_csv('CC GENERAL.csv')
+
+# Drop the ID column
+X = X.drop('CUST_ID', axis=1)
+
+# Handle missing values (fill with the value from the row before)
+# FIX: Use .ffill() directly, as method='ffill' is deprecated
+X.ffill(inplace=True) 
+
+# Standardizing the data is ESSENTIAL for this algorithm
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# --- 2. Implement Hierarchical Clustering & Plot Dendrogram ---
+# This is the core of the algorithm: building the hierarchy
+plt.figure(figsize=(10, 7))
+plt.title("Customer Dendrogram")
+dend = shc.dendrogram(shc.linkage(X_scaled, method='ward'))
+plt.show()
+
+# --- 3. Get Cluster Labels (Example) ---
+# After looking at the dendrogram, you pick a 'k' (e.g., 3 clusters)
+# Then you "cut the tree" to get your labels.
+cluster = AgglomerativeClustering(n_clusters=3, metric='euclidean', linkage='ward')
+labels = cluster.fit_predict(X_scaled)
+
+# You can now see which cluster each customer belongs to:
+print("Cluster labels for the first 10 customers:")
+print(labels[:10])

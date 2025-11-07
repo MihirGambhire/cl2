@@ -1,0 +1,42 @@
+# Import libraries
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+# Download required resources
+nltk.download('stopwords')
+nltk.download('punkt')
+
+# Open and read file
+file = open('file.txt', 'r', encoding='utf8')
+lines = file.readlines()
+file.close()
+
+# Preprocessing: build inverted index
+inverted_index = {}
+stop_words = set(stopwords.words('english'))
+
+for i, line in enumerate(lines):
+    # Tokenize and clean
+    words = word_tokenize(line.lower())
+    words = [w for w in words if w.isalnum() and w not in stop_words]
+    
+    # Build inverted index
+    for word in words:
+        if word not in inverted_index:
+            inverted_index[word] = [i + 1]
+        elif (i + 1) not in inverted_index[word]:
+            inverted_index[word].append(i + 1)
+
+# Display the inverted index
+print("\nInverted Index:")
+for word, doc_list in inverted_index.items():
+    print(f"{word} : {doc_list}")
+
+# Search for a word
+search_word = input("\nEnter a word to search: ").lower()
+if search_word in inverted_index:
+    print(f"The word '{search_word}' is found in lines: {inverted_index[search_word]}")
+else:
+    
+    print(f"The word '{search_word}' is not found in the document.")

@@ -1,0 +1,82 @@
+!pip install numpy
+!pip install pandas
+!pip install scikit-learn
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+file_name = 'spam.csv' 
+try:
+    # Use on_bad_lines='skip' to avoid errors from "broken" data
+    mail_data = pd.read_csv(file_name, encoding='latin-1', on_bad_lines='skip')
+    print(f"--- 2. Successfully loaded '{file_name}'. ---")
+except FileNotFoundError:
+    print(f"--- ERROR: '{file_name}' not found! ---")
+    print("Please make sure you saved the sample data as 'spam.csv' in the same folder.")
+
+# --- 3. Pre-processing ---
+# Keep only the two columns we need
+clean_data = mail_data[['v1', 'v2']]
+clean_data.rename(columns={'v1': 'category', 'v2': 'message'}, inplace=True)
+
+# Convert category ('ham' or 'spam') into numbers (0 or 1)
+clean_data['category_num'] = clean_data['category'].map({'ham': 0, 'spam': 1})
+
+print("--- 3. Data cleaned and pre-processed. ---")
+print(clean_data.head()) # Shows the first 5 rows
+
+
+# --- 4. Define your X (features) and y (target) ---
+X = clean_data['message']
+y = clean_data['category_num']
+
+# --- 5. Split Data into Training and Testing sets ---
+# --- random_state=5 ensures we get the exact same "random" split every time, making our results reproducible. ---
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=5)
+print("\n--- 4. Data split into training (70%) and testing (30%) sets. ---")
+
+# --- 6. Text Feature Extraction (TF-IDF) ---
+# This converts your text (e.g., "free offer") into numbers
+feature_extraction = TfidfVectorizer(min_df=1, stop_words='english', lowercase=True)
+
+X_train_features = feature_extraction.fit_transform(X_train)
+X_test_features = feature_extraction.transform(X_test)
+print("--- 5. Text converted to numbers (TF-IDF). ---")
+
+# --- 7. Train the Classification Model ---
+model = MultinomialNB()
+model.fit(X_train_features, y_train)
+print("--- 6. Model has been trained. ---")
+
+# --- 8. Evaluate the Model ---
+print("\n--- 7. Evaluating Model Performance ---")
+
+# Make predictions on the test data
+prediction_on_test_data = model.predict(X_test_features)
+accuracy_on_test_data = accuracy_score(y_test, prediction_on_test_data)
+# This will now be a more realistic number (like 80-95%)
+print(f"Accuracy on Test Data: {accuracy_on_test_data * 100:.2f}%") 
+
+# Print the full report
+print("\nClassification Report (Test Data):")
+print(classification_report(y_test, prediction_on_test_data))
+
+
+# --- 9. Test with a new, custom email ---
+print("\n--- 8. Testing with a new email ---")
+input_mail = ["Congratulations! You have won a 1 million dollar prize. Click here to claim."]
+
+# Convert the new email to numbers
+input_data_features = feature_extraction.transform(input_mail)
+
+# Make a prediction
+prediction = model.predict(input_data_features)
+
+if prediction[0] == 1:
+    print("This email is SPAM.")
+else:
+    print("This email is HAM (not spam).")

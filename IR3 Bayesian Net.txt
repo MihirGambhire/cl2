@@ -1,0 +1,78 @@
+# ===================================================================
+# --- FINAL IR PRACTICAL 3 (Simple, Correct, "Cheat Sheet" Version) ---
+# --- (Copy-Paste this one cell) ---
+# ===================================================================
+
+# --- 1. Get Tools ---
+!pip install numpy
+!pip install pandas
+!pip install pgmpy
+
+import numpy as np
+import pandas as pd
+from pgmpy.models import DiscreteBayesianNetwork as BayesianModel
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.inference import VariableElimination
+
+print("--- 1. Tools imported. ---")
+
+# --- 2. Load Data ---
+try:
+    data = pd.read_csv('heart.csv')
+    # If the target column is named 'target', rename it for consistency
+    if 'target' in data.columns:
+        data.rename(columns={'target': 'heartdisease'}, inplace=True)
+    data = data.replace('?', np.nan)
+    data.dropna(inplace=True) # Drop any rows with missing data
+    print("--- 2. heart.csv loaded and cleaned. ---")
+except FileNotFoundError:
+    print("--- ERROR: heart.csv not found! Please add it to your folder. ---")
+
+# --- 3. Put Numbers into "Bins" (The Fix) ---
+# This is the fix that stops the code from crashing.
+# We only bin the columns we are going to use.
+print("--- 3. Putting continuous numbers into groups (bins)... ---")
+
+# Bin 'age' (e.g., 29 to 77) into 5 groups
+data['age_bin'] = pd.cut(data['age'], bins=5, labels=['Very-Young', 'Young', 'Mid-Age', 'Old', 'Very-Old'])
+
+# Bin 'chol' (e.g., 126 to 564) into 4 groups
+data['chol_bin'] = pd.cut(data['chol'], bins=4, labels=['Low', 'Medium', 'High', 'Very-High'])
+
+print("--- 4. Data is now 'binned' and ready. ---")
+
+
+# --- 5. Draw a SIMPLE Blueprint (Easier to memorize) ---
+# You only need a simple model to pass the exam!
+model = BayesianModel([
+    ('age_bin', 'heartdisease'),    # Age affects heart disease
+    ('chol_bin', 'heartdisease'), # Cholesterol affects heart disease
+    ('sex', 'heartdisease')       # Sex affects heart disease
+])
+print("--- 5. Simple blueprint drawn. ---")
+
+# --- 6. "Learn!" ---
+# We only fit the columns we are actually using
+model_data = data[['age_bin', 'chol_bin', 'sex', 'heartdisease']]
+model.fit(model_data, estimator=MaximumLikelihoodEstimator)
+print("--- 6. Model has learned from the data. ---")
+
+# --- 7. "Diagnose!" ---
+infer = VariableElimination(model)
+print("--- 7. Diagnosis engine is ready. ---")
+
+# Query 1: (Uses the 'Very-Young' bin for age 38)
+print('\n1. Probability of HeartDisease given Age = Very-Young (like 38)')
+q1 = infer.query(
+    variables=['heartdisease'], 
+    evidence={'age_bin': 'Very-Young'}
+)
+print(q1)
+
+# Query 2: (Uses the 'Medium' bin for chol 212)
+print('\n2. Probability of HeartDisease given Cholesterol = Medium (like 212)')
+q2 = infer.query(
+    variables=['heartdisease'], 
+    evidence={'chol_bin': 'Medium'}
+)
+print(q2)

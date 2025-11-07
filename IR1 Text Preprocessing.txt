@@ -1,0 +1,97 @@
+# ===================================================================
+# --- FINAL IR PRACTICAL 1 (CLEANED VERSION) ---
+# --- (Copy-Paste this one cell) ---
+# ===================================================================
+
+# --- 1. Imports (All in one place) ---
+!pip install nltk
+import nltk
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import string
+import csv
+import os
+
+print("--- Imports complete. ---")
+
+# --- 2. NLTK Downloads (All in one place) ---
+nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('wordnet') # Dictionary for the lemmatizer
+print("--- NLTK packages downloaded. ---")
+
+
+# --- 3. The All-in-One Pre-processing Function ---
+def pre_processing(text):
+    """
+    This one function does all pre-processing:
+    - Lowercase, Tokenize, Remove Stopwords & Punctuation
+    - Stems (for the main answer)
+    - Lemmatizes (for the backup answer)
+    """
+    
+    # Get tools ready
+    stopwords_list = set(stopwords.words('english'))
+    ps = PorterStemmer()
+    wnl = WordNetLemmatizer()
+
+    # Process the text
+    text = text.lower()
+    words = word_tokenize(text)
+
+    # Filter out stopwords and punctuation
+    filtered_words = []
+    for word in words:
+        if word.isalpha() and word not in stopwords_list:
+            filtered_words.append(word)
+
+    # --- Process the filtered list in two ways ---
+    
+    # 1. Stemming (Main Answer)
+    stemmed_words = [ps.stem(word) for word in filtered_words]
+    
+    # 2. Lemmatization (Backup Answer)
+    #    We add pos='v' to tell it to treat words as Verbs (e.g., 'chosen' -> 'choose')
+    lemmatized_words = [wnl.lemmatize(word, pos='v') for word in filtered_words]
+
+    # Print for the examiner to see the comparison
+    print(f"Original: {text[:60]}...")
+    print(f"  STEMMED : {stemmed_words}")
+    print(f"  LEMMATIZED : {lemmatized_words}\n")
+
+    # Return the stemmed words for the main practical requirement
+    return stemmed_words
+
+# --- 4. File Processing (Using your 'sample.txt') ---
+processed_text = []
+file_name = "sample.txt" # This will use your existing file
+
+print("--- STARTING PRE-PROCESSING (Stemming & Lemmatization) ---\n")
+try:
+    with open(file_name, 'r') as f:
+        for line in f:
+            if line.strip(): # Skip empty lines
+                # The function will print both, but only returns the stemmed words
+                stemmed_tokens = pre_processing(line)
+                processed_text.extend(stemmed_tokens)
+except FileNotFoundError:
+    print(f"Error: The file '{file_name}' was not found.")
+    print("Please make sure your 'sample.txt' is in the same folder as this notebook.")
+print("\n--- PROCESS COMPLETE ---")
+
+
+# --- 5. Print Final List (Stemmed) ---
+print("\nFinal list of all *stemmed* tokens (for CSV):")
+print(processed_text)
+
+# --- 6. Write to CSV (Stemmed) ---
+output_file = "output.csv"
+# Added newline='' which is important for writing CSV files
+with open(output_file, "w", newline='') as file:
+    writer = csv.writer(file, delimiter=',')
+    writer.writerow(processed_text)
+
+print(f"\nSuccessfully saved stemmed tokens to {output_file}")
+print(f"--- You can now check your folder for '{output_file}' ---")

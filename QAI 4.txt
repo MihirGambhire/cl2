@@ -1,0 +1,109 @@
+﻿# ---------------------------------------------
+# 🪄 Import all required libraries
+# ---------------------------------------------
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel, depolarizing_error
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+# ---------------------------------------------
+# ⚙️ Step 1: Create a Quantum Circuit
+# ---------------------------------------------
+# Create a circuit with 3 qubits and 3 classical bits
+circuit = QuantumCircuit(3, 3)
+
+
+# Apply a Hadamard gate on qubit 0 (to create superposition)
+circuit.h(0)
+
+
+# Apply CNOT gates to entangle qubit 0 with qubits 1 and 2
+circuit.cx(0, 1)
+circuit.cx(0, 2)
+
+
+# Measure all qubits to classical bits
+circuit.measure([0, 1, 2], [0, 1, 2])
+
+
+# Optional: Draw the circuit diagram
+circuit.draw('mpl')
+plt.show()
+
+
+# ---------------------------------------------
+# 🌫️ Step 2: Define a Noise Model
+# ---------------------------------------------
+# Create a noise model to simulate errors in real quantum hardware
+noise = NoiseModel()
+
+
+# Add depolarizing errors
+# 1-qubit gate error probability = 1%
+d1 = depolarizing_error(0.01, 1)
+
+
+# 2-qubit gate error probability = 2%
+d2 = depolarizing_error(0.02, 2)
+
+
+# Apply these noise errors to all gates of the given types
+noise.add_all_qubit_quantum_error(d1, ["u3", "h", "x"])
+noise.add_all_qubit_quantum_error(d2, ["cx"])
+
+
+# ---------------------------------------------
+# 🧮 Step 3: Run Simulation with Noise
+# ---------------------------------------------
+# Use AerSimulator as our quantum backend
+backend = AerSimulator()
+
+
+# Transpile the circuit for the simulator backend
+compiled_circuit = transpile(circuit, backend)
+
+
+# Run the circuit with noise model and 1024 shots
+simulation = backend.run(compiled_circuit, shots=1024, noise_model=noise)
+
+
+# Get the output counts (results of all measurements)
+output_counts = simulation.result().get_counts(circuit)
+
+
+# ---------------------------------------------
+# 🧰 Step 4: Simple Noise Mitigation
+# ---------------------------------------------
+# Apply a simple mitigation by scaling counts slightly
+# (This is just for demonstration, not real error correction)
+mitigated_counts = {key: output_counts[key] * (1 - 0.2) for key in output_counts}
+
+
+# ---------------------------------------------
+# 📊 Step 5: Visualize the Results
+# ---------------------------------------------
+# Create positions for the bar chart
+x = np.arange(len(output_counts))
+
+
+# Set width for the bars
+width = 0.35
+
+
+# Plot both bars side-by-side (original vs mitigated)
+plt.bar(x - width/2, list(output_counts.values()), width, label="Original (Noisy)")
+plt.bar(x + width/2, list(mitigated_counts.values()), width, label="Mitigated")
+
+
+# Add labels and title
+plt.xticks(x, list(output_counts.keys()))
+plt.xlabel("Measured States")
+plt.ylabel("Counts")
+plt.title("Noisy vs Mitigated Quantum Measurement Results")
+plt.legend()
+
+
+# Display the plot
+plt.show()

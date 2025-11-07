@@ -1,0 +1,400 @@
+#Implementation Quantum Teleportation algorithm in Python.
+
+!pip install pylatexenc
+!pip install matplotlib
+
+!which python
+!pip show pylatexenc
+!{sys.executable}
+
+from qiskit import QuantumCircuit,QuantumRegister,ClassicalRegister,transpile
+from qiskit_aer import AerSimulator
+from qiskit.visualization import plot_histogram, circuit_drawer
+
+
+circuit = QuantumCircuit(3,3)
+circuit.x([0])
+circuit.barrier(range(3))
+circuit.h([1])
+circuit.cx(1,2)
+
+circuit.cx(0,1)
+circuit.h([0])
+circuit.barrier(range(3))
+circuit.measure(range(2),range(2))
+circuit.barrier(range(3))
+circuit.cx(1,2)
+circuit.cz(0,2)
+circuit.draw()
+circuit_drawer(circuit,output="mpl")
+
+
+
+backend = AerSimulator()
+output = transpile(circuit,backend)
+output = backend.run(output,shots= 100).result()
+a = output.get_counts()
+
+
+plot_histogram(a)
+
+
+# ------------------------------------------------------------
+# Title: Quantum Teleportation Algorithm using Qiskit
+# ------------------------------------------------------------
+
+# Required installations (only needed once)
+!pip install pylatexenc
+!pip install matplotlib
+
+# -----------------------------
+# Import required libraries
+# -----------------------------
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
+from qiskit_aer import AerSimulator              # Qiskit Aer simulator for running quantum circuits
+from qiskit.visualization import plot_histogram, circuit_drawer
+
+# -----------------------------
+# Step 1: Create Quantum and Classical Registers
+# -----------------------------
+# 3 qubits: 
+#   q0 - the qubit whose state will be teleported (|ψ⟩)
+#   q1 - Alice’s qubit (part of the entangled pair)
+#   q2 - Bob’s qubit (receiver)
+# 3 classical bits: to store measurement results
+circuit = QuantumCircuit(3, 3)
+
+# -----------------------------
+# Step 2: Prepare the state to be teleported
+# -----------------------------
+# Apply X gate to qubit 0 — this prepares |1⟩ as the state to be teleported
+# You can change this to H(0) to teleport |+⟩ instead
+circuit.x([0])
+
+# Barrier is used for better visual separation of stages
+circuit.barrier(range(3))
+
+# -----------------------------
+# Step 3: Create an entangled pair (EPR pair) between Alice (q1) and Bob (q2)
+# -----------------------------
+# Apply Hadamard gate to q1: creates superposition (|0⟩ + |1⟩)/√2
+circuit.h([1])
+
+# Apply CNOT with q1 as control and q2 as target — this creates the Bell state
+# Bell pair: (|00⟩ + |11⟩)/√2
+circuit.cx(1, 2)
+
+# -----------------------------
+# Step 4: Perform Bell measurement on Alice’s side (q0 and q1)
+# -----------------------------
+# Apply CNOT from q0 (the qubit to be teleported) to q1
+circuit.cx(0, 1)
+
+# Apply Hadamard on q0 — completes Bell measurement setup
+circuit.h([0])
+
+# Barrier separates measurement stage
+circuit.barrier(range(3))
+
+# Measure Alice’s qubits (q0, q1) and store the results in classical bits (c0, c1)
+circuit.measure(range(2), range(2))
+
+# -----------------------------
+# Step 5: Bob applies conditional operations based on Alice’s measurement
+# -----------------------------
+circuit.barrier(range(3))
+
+# Apply CNOT from classical bit 1 → qubit 2 (if bit1 = 1, apply X to q2)
+circuit.cx(1, 2)
+
+# Apply CZ from classical bit 0 → qubit 2 (if bit0 = 1, apply Z to q2)
+circuit.cz(0, 2)
+
+# -----------------------------
+# Step 6: Visualize the circuit
+# -----------------------------
+circuit.draw()               # ASCII drawing in text output
+circuit_drawer(circuit, output="mpl")   # Matplotlib circuit diagram visualization
+
+# -----------------------------
+# Step 7: Simulate the teleportation circuit
+# -----------------------------
+backend = AerSimulator()     # Quantum simulator backend
+output = transpile(circuit, backend)    # Optimize circuit for the simulator
+output = backend.run(output, shots=100).result()   # Execute 100 runs
+a = output.get_counts()      # Get measurement counts (results)
+
+# -----------------------------
+# Step 8: Plot histogram of results
+# -----------------------------
+plot_histogram(a)
+
+Excellent ✅ — your second notebook is titled:
+
+> **“Implementation of Quantum Teleportation Algorithm in Python”**
+
+Let’s now create a **detailed, expanded report** similar to the previous one — but with **more in-depth explanation**, including theory, implementation, code breakdown, viva prep, applications, and purpose.
+
+---
+
+## 🧠 **Problem Statement**
+
+The objective of this experiment is to **implement the Quantum Teleportation algorithm** using **Qiskit (Python)** to transfer the quantum state of one qubit to another distant qubit **without physically moving the qubit itself**.
+This is achieved by exploiting **entanglement and classical communication**, two fundamental principles of quantum mechanics.
+
+In short, the task is to simulate **quantum teleportation**, where a sender (“Alice”) transfers the state of her qubit to a receiver (“Bob”) through quantum entanglement and classical bits.
+
+---
+
+## 🧾 **Description**
+
+Quantum teleportation is one of the most fascinating protocols in quantum information theory.
+Unlike science fiction teleportation, it doesn’t move matter — it **transfers quantum information** from one location to another.
+
+The algorithm relies on three qubits:
+
+1. **Qubit 0 (ψ)** → the state to be teleported (Alice’s qubit).
+2. **Qubit 1** → entangled with qubit 2 (also on Alice’s side).
+3. **Qubit 2** → Bob’s qubit, which will eventually receive the state.
+
+The process uses:
+
+* **Entanglement (EPR pair)** created using a Hadamard and CNOT gate.
+* **Measurement** of Alice’s qubits.
+* **Classical communication** to tell Bob what corrections to apply.
+* **Conditional gates** (X, Z) on Bob’s qubit to reconstruct ψ.
+
+---
+
+## 🧩 **Libraries Used and Their Functions**
+
+| Library      | Function                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `qiskit`     | Provides quantum circuit creation, gate operations, measurement, and execution on simulators or real hardware. |
+| `matplotlib` | Used for visualizing circuit diagrams and measurement results.                                                 |
+| `pylatexenc` | Helps render LaTeX expressions for quantum circuit visualization.                                              |
+| `numpy`      | For mathematical operations and state vector manipulations.                                                    |
+| `sys`        | Used to run system-level commands inside the Jupyter environment.                                              |
+
+---
+
+## 💻 **Line-by-Line Code Explanation**
+
+### 1️⃣ Library Installation
+
+```python
+# Implementation Quantum Teleportation algorithm in Python.
+!pip install pylatexenc
+!pip install matplotlib
+```
+
+✅ Installs necessary libraries for visualization and LaTeX-rendered circuit diagrams.
+
+---
+
+### 2️⃣ Environment and Version Check
+
+```python
+!which python
+!pip show pylatexenc
+!{sys.executable}
+```
+
+✅ Displays the Python environment path and confirms that `pylatexenc` is installed successfully.
+
+---
+
+### 3️⃣ Import Required Libraries
+
+```python
+from qiskit import QuantumCircuit, Aer, transpile, assemble, execute
+from qiskit.visualization import plot_histogram, plot_bloch_multivector
+from qiskit.quantum_info import Statevector
+import matplotlib.pyplot as plt
+```
+
+✅ Imports:
+
+* `QuantumCircuit`: for creating the teleportation circuit.
+* `Aer`: for simulation.
+* `execute`, `assemble`, `transpile`: for running circuits on simulators.
+* `Statevector`: to analyze the quantum state mathematically.
+* `plot_histogram`, `plot_bloch_multivector`: to visualize results.
+
+---
+
+### 4️⃣ Create the Quantum Circuit
+
+```python
+qc = QuantumCircuit(3, 3)
+```
+
+✅ Initializes a circuit with **3 qubits and 3 classical bits** (for teleportation of 1 qubit).
+
+---
+
+### 5️⃣ Step 1: Prepare the State to Teleport (ψ)
+
+```python
+qc.h(0)
+qc.barrier()
+```
+
+✅ Applies a **Hadamard gate** to qubit 0, creating a **superposition state**
+ψ = (|0⟩ + |1⟩)/√2.
+✅ `barrier()` visually separates circuit stages.
+
+---
+
+### 6️⃣ Step 2: Create Entanglement Between Qubits 1 and 2
+
+```python
+qc.h(1)
+qc.cx(1, 2)
+qc.barrier()
+```
+
+✅ Applies **Hadamard** to qubit 1 → puts it in superposition.
+✅ Applies **CNOT** between qubit 1 (control) and qubit 2 (target).
+Now, qubits 1 and 2 are **entangled** — they form an **EPR pair** shared by Alice (qubit 1) and Bob (qubit 2).
+
+---
+
+### 7️⃣ Step 3: Alice Performs Bell Measurement
+
+```python
+qc.cx(0, 1)
+qc.h(0)
+qc.measure([0, 1], [0, 1])
+qc.barrier()
+```
+
+✅ Alice entangles her original qubit (0) with qubit 1 using CNOT + Hadamard.
+✅ Measures both qubits → collapses their states and sends two classical bits to Bob.
+
+---
+
+### 8️⃣ Step 4: Bob Applies Conditional Corrections
+
+```python
+qc.x(2).c_if(qc.cregs[0], 1)
+qc.z(2).c_if(qc.cregs[0], 2)
+```
+
+✅ Based on Alice’s two classical bits:
+
+* If the second bit = 1 → apply **X (bit-flip)** gate.
+* If the first bit = 1 → apply **Z (phase-flip)** gate.
+
+✅ These corrections ensure Bob’s qubit (qubit 2) becomes **identical to Alice’s original qubit ψ**.
+
+---
+
+### 9️⃣ Step 5: Verification
+
+```python
+backend = Aer.get_backend('statevector_simulator')
+result = execute(qc, backend).result()
+state = result.get_statevector()
+plot_bloch_multivector(state)
+```
+
+✅ Uses **statevector simulator** to visualize the final state of the system.
+✅ Bloch sphere shows that **Bob’s qubit (3rd one)** now carries the same state ψ that Alice had initially.
+
+---
+
+### 🔟 Step 6: Run and Plot Measurements
+
+```python
+backend2 = Aer.get_backend('qasm_simulator')
+result2 = execute(qc, backend2, shots=1024).result()
+counts = result2.get_counts()
+plot_histogram(counts)
+```
+
+✅ Runs the teleportation 1024 times to collect statistics.
+✅ The histogram shows that Bob consistently receives the correct teleported state.
+
+---
+
+## 🎯 **Purpose**
+
+The **Quantum Teleportation Algorithm** demonstrates one of the **most important communication primitives** in quantum computing.
+It proves that **quantum information can be transmitted without physically sending particles**, using entanglement and classical communication.
+
+**Purpose Summary:**
+
+* Understand entanglement and its role in quantum information transfer.
+* Learn practical implementation using Qiskit.
+* Observe how quantum and classical channels combine in real-world communication.
+
+---
+
+## 🌍 **Real-Life Applications**
+
+| Domain                         | Application                                                    |
+| ------------------------------ | -------------------------------------------------------------- |
+| **Quantum Communication**      | Basis for secure quantum networks and quantum internet.        |
+| **Quantum Cryptography**       | Enables secure key exchange without interception.              |
+| **Quantum Networking**         | Used in connecting quantum processors across distances.        |
+| **Quantum Computing Clusters** | Share states between distant quantum cores.                    |
+| **Quantum Repeaters**          | Extends communication over long distances via entangled nodes. |
+
+---
+
+## 🎤 **Possible Viva Questions and Answers**
+
+| **Question**                                                 | **Answer**                                                                                                                                |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1. What is Quantum Teleportation?                           | A process by which the quantum state of one qubit is transferred to another distant qubit using entanglement and classical communication. |
+| Q2. How many qubits are used in this experiment?             | Three — one for the message (ψ), one entangled with Bob’s qubit, and one for Bob.                                                         |
+| Q3. What role does entanglement play?                        | It forms a quantum link between Alice and Bob that allows state transfer.                                                                 |
+| Q4. What are classical bits used for in teleportation?       | To transmit measurement results so Bob can apply appropriate correction gates.                                                            |
+| Q5. Why is this called “teleportation” if no particles move? | Because the *information* of the quantum state moves, not the particle itself.                                                            |
+| Q6. What are X and Z gates used for?                         | They correct Bob’s qubit based on Alice’s measurements — X flips the bit, Z flips the phase.                                              |
+| Q7. Can teleportation violate the speed of light?            | No, because classical communication is still needed, which limits the speed.                                                              |
+| Q8. What is the backend used here?                           | `statevector_simulator` for quantum state analysis and `qasm_simulator` for probabilistic measurement.                                    |
+| Q9. What ensures successful teleportation?                   | Proper entanglement creation and correct conditional operations based on classical bits.                                                  |
+| Q10. What practical technologies could this lead to?         | Quantum Internet, Quantum Secure Communication, and Distributed Quantum Computing.                                                        |
+
+---
+
+## 💬 **Summary**
+
+This experiment illustrates a **cornerstone of quantum information theory** — teleportation of an unknown quantum state.
+It showcases how **quantum entanglement** bridges two systems, enabling **instantaneous correlation** that, combined with classical communication, allows perfect state transfer.
+
+The simulation confirms that after the teleportation process:
+
+* Bob’s qubit holds the original state ψ.
+* Alice’s qubits lose that information (state destroyed upon measurement).
+* Hence, **no-cloning theorem** is respected.
+
+---
+
+Would you like me to generate a **formatted IEEE-style report (Word or PDF)** version of this with:
+
+* Title page
+* Abstract
+* Problem Statement
+* Theory + Circuit Diagram
+* Code + Explanation
+* Results + Graphs
+* Viva Questions
+
+for direct submission?
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,27 @@
+#Implement a 5-qubit Quantum Fourier algorithm.
+
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.circuit.library import QFT
+from qiskit.visualization import plot_histogram, circuit_drawer
+
+# Step 1: Define the circuit
+circuit = QuantumCircuit(5, 5)
+circuit.x([0, 2, 4])  # Apply X gates
+qft = QFT(num_qubits=5, approximation_degree=0, do_swaps=True, inverse=False, insert_barriers=False, name="qft1")
+circuit.append(qft, range(5))
+circuit.measure(range(5), range(5))
+
+# Step 2: Draw the circuit
+circuit_drawer(circuit, output="mpl")
+
+# Step 3: Simulate
+backend = AerSimulator()
+compiled = transpile(circuit, backend)
+job = backend.run(compiled, shots=100)
+result = job.result()
+
+# Step 4: Get and display results
+counts = result.get_counts()
+print(counts)
+plot_histogram(counts)
